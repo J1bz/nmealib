@@ -30,6 +30,7 @@
 
 #define first_eol_char  ('\r')
 #define second_eol_char ('\n')
+#define unix_eol_char ('\n')
 
 static void reset_sentence_parser(nmeaPARSER * parser, sentence_parser_state new_state) {
   assert(parser);
@@ -111,9 +112,8 @@ static bool nmea_parse_sentence_character(nmeaPARSER *parser, const char * c) {
       if (*c == '*') {
         parser->sentence_parser.state = READ_CHECKSUM;
         parser->sentence_parser.sentence_checksum_chars_count = 0;
-      } else if (*c == first_eol_char) {
+      } else if (*c == unix_eol_char) {
         parser->sentence_parser.state = READ_EOL;
-        parser->sentence_parser.sentence_eol_chars_count = 1;
       } else if (isInvalidNMEACharacter(c)) {
         reset_sentence_parser(parser, SKIP_UNTIL_START);
       } else {
@@ -149,29 +149,13 @@ static bool nmea_parse_sentence_character(nmeaPARSER *parser, const char * c) {
 
 
     case READ_EOL:
-      switch (parser->sentence_parser.sentence_eol_chars_count) {
-        case 0:
-          if (*c != first_eol_char) {
-            reset_sentence_parser(parser, SKIP_UNTIL_START);
-          } else {
-            parser->sentence_parser.sentence_eol_chars_count = 1;
-          }
-          break;
-
-        case 1:
-          if (*c != second_eol_char) {
-            reset_sentence_parser(parser, SKIP_UNTIL_START);
-          } else {
-            parser->sentence_parser.state = SKIP_UNTIL_START;
-            return (!parser->sentence_parser.sentence_checksum_chars_count
-                || (parser->sentence_parser.sentence_checksum_chars_count
-                    && (parser->sentence_parser.sentence_checksum == parser->sentence_parser.calculated_checksum)));
-          }
-          break;
-
-        default:
-          reset_sentence_parser(parser, SKIP_UNTIL_START);
-          break;
+      if (*c != unix_eol_char) {
+        reset_sentence_parser(parser, SKIP_UNTIL_START);
+      } else {
+        parser->sentence_parser.state = SKIP_UNTIL_START;
+        return (!parser->sentence_parser.sentence_checksum_chars_count
+            || (parser->sentence_parser.sentence_checksum_chars_count
+                && (parser->sentence_parser.sentence_checksum == parser->sentence_parser.calculated_checksum)));
       }
       break;
 

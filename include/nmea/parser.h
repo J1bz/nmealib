@@ -50,8 +50,6 @@ typedef struct _sentencePARSER {
     char sentence_checksum_chars[2];
     char sentence_checksum_chars_count;
 
-    char sentence_eol_chars_count;
-
     bool has_checksum;
 
     sentence_parser_state state;
